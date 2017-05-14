@@ -2,8 +2,13 @@ import sys
 import numpy as np
 import math
 
-file_name, train_file, test_file, classifier = sys.argv
+train_file, test_file, classifier = sys.argv[1:4]
 
+flag=False
+try:
+    flag = sys.argv[4]
+except IndexError:
+    pass
 
 # DECISION TREE METHODS:
 
@@ -14,7 +19,6 @@ file_name, train_file, test_file, classifier = sys.argv
 # used to ensure every possible value of each attribute has a branch
 
 attribute_domain = dict()
-
 
 # Calculate entropy of numpy array with elements in {"yes", "no"}
 # expect non-zero example_classes
@@ -88,14 +92,12 @@ def chooseAttribute(examples, attributes):
     # calculate entropy of given examples
     base_entropy = entropy(examples[:,-1])
 
-
     for attribute in attributes:
         info_gain = base_entropy - reminder(examples, attribute)
         if info_gain >= max_gain:
             max_gain = info_gain
             best_attribute = attribute
     return best_attribute
-
 
 
 # Might need to reformat a bit
@@ -168,7 +170,6 @@ def createDT(examples, attributes, default=None):
         # create subtrees
         for value in attribute_domain[best_attribute]:
 
-
             # examples where best_attribute == value
             sub_examples = examples[examples[:,best_attribute]==value]
 
@@ -177,20 +178,11 @@ def createDT(examples, attributes, default=None):
     return tree
         # create sub-trees with example sub-sets split by its possible values
 
-
-
-
-
-
-
-
-
     # pseudo code
     # http://puu.sh/vNiO0/d05b24c98b.jpg
     #
     # Information gain definition
     # http://puu.sh/vNiLk/f82ecd39af.jpg
-
 
 # returns list of classes ("yes" or "no"):
 # ith element is class of ith row in test_data, as classified by decision_tree
@@ -213,11 +205,6 @@ def DTClassify(decision_tree, test_data):
             # time.sleep(0.1)
         classes.append(tree.leaf_class)
     return classes
-
-
-
-
-
 
 # # NAIVE BAYES METHODS:
 
@@ -335,17 +322,21 @@ def parseFile(file_name):
 
     return np.array(rows)
 
-def main():
+def getAccuracy(predicted_classes, actual_classes):
+    count = 0
+    for p_class, a_class in zip(predicted_classes, actual_classes):
+        if p_class == str(a_class): count += 1
+    return float(count)/len(actual_classes)*100
 
+def main():
 
     training_data = parseFile(train_file)
     test_data = parseFile(test_file)
-
+    predicted_classes = []
+    dt = object
     # populate classes
     if classifier.lower() == 'nb':
-        classes = NaiveBayes(training_data, test_data);
-
-        #do
+        predicted_classes = NaiveBayes(training_data, test_data)
     elif classifier.lower() == 'dt':
         # fill attribute domain dictionary (assuming training data contains all)
         # iterate over all attributes
@@ -356,11 +347,13 @@ def main():
             # create decision tree using training data, based on all examples
         dt = createDT(training_data, range(training_data.shape[1]-1))
 
-        dt.printTree()
-        classes = DTClassify(dt, test_data)
+        predicted_classes = DTClassify(dt, test_data)
 
-    for i in range(len(classes)):
-         print(classes[i])
+    if flag: print(dt.printTree())
+    
+    print('\n'.join(predicted_classes))
+
+    if flag: print('Accuracy: '+"{0:.2f}".format(getAccuracy(predicted_classes, actual_classes=test_data[:,-1]))+"%")
 
 if __name__ == '__main__':
     sys.exit(main())

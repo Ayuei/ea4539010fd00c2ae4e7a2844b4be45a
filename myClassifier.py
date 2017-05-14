@@ -278,7 +278,7 @@ def NaiveBayes(train_data, test_data):
         no_numerator = statistics["pno"]
 
         # iterate over attributes
-        for j in range(num_cols):
+        for j in range(num_cols-1):
 
            # mean and stdevs of attribute given yes/no
            yes_mu = statistics["yes"+str(j)+"mu"]

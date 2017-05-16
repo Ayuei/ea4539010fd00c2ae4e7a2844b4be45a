@@ -1,7 +1,7 @@
 import random
 from collections import defaultdict
-
-in_file = open("pima.csv")
+import sys
+in_file = open(sys.argv[1])
 out_file = open("pima-fold.pickle", "wb+")
 data = in_file.read().splitlines()
 folds = defaultdict(list)

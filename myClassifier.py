@@ -2,11 +2,17 @@ import sys
 import numpy as np
 import math
 
-train_file, test_file, classifier = sys.argv[1:4]
+#train_file, test_file, classifier = sys.argv[1:4]
+
+classifier = sys.argv[1]
+
+testFold = []
+trainFolds = []
 
 flag=False
 try:
-    flag = sys.argv[4]
+    #flag = sys.argv[4]
+    flag = sys.argv[2]
 except IndexError:
     pass
 
@@ -328,10 +334,12 @@ def getAccuracy(predicted_classes, actual_classes):
         if p_class == str(a_class): count += 1
     return float(count)/len(actual_classes)*100
 
-def main():
+def main(trainFolds, testFold):
 
-    training_data = parseFile(train_file)
-    test_data = parseFile(test_file)
+    #training_data = parseFile(train_file)
+    #test_data = parseFile(test_file)
+    training_data = np.array([line.split(',') for line in trainFolds])
+    test_data = np.array([line.split(',') for line in testFold])
     predicted_classes = []
     dt = object
     # populate classes
@@ -348,12 +356,27 @@ def main():
         dt = createDT(training_data, range(training_data.shape[1]-1))
 
         predicted_classes = DTClassify(dt, test_data)
+    try:
+        if flag and classifier.lower() == 'dt': print(dt.printTree())
+        #print('\n'.join(predicted_classes))
+        #if flag: print('Accuracy: '+"{0:.2f}".format(getAccuracy(predicted_classes, actual_classes=test_data[:,-1]))+"%")
 
-    if flag: print(dt.printTree())
-    
-    print('\n'.join(predicted_classes))
-
-    if flag: print('Accuracy: '+"{0:.2f}".format(getAccuracy(predicted_classes, actual_classes=test_data[:,-1]))+"%")
-
+    except Exception:
+        pass
+        #print('\n'.join(predicted_classes))
+        #print('Accuracy: ' + "{0:.2f}".format(getAccuracy(predicted_classes, actual_classes=test_data[:, -1])) + "%")
+    return getAccuracy(predicted_classes, actual_classes=test_data[:, -1])
 if __name__ == '__main__':
-    sys.exit(main())
+    import pickle
+    import copy
+    pickle_file = open("pima-fold.pickle", 'rb')
+    folds = pickle.load(pickle_file)
+    total = float(0.0); length = 0
+    for i in range(10):
+        folds_copy = copy.deepcopy(folds)
+        testFold = folds_copy.pop('fold' + str(i + 1))
+        trainFolds = [folds_copy[fold] for fold in folds_copy]
+        trainFolds = [j for i in trainFolds for j in i]
+        total += main(testFold=testFold, trainFolds=trainFolds); length+=1
+    print('Average Accuracy: '+ "{0:.6f}".format(total/length)+"%")
+    sys.exit(0)
